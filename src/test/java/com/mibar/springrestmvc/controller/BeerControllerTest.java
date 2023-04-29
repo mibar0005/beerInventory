@@ -10,12 +10,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.any;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 //@SpringBootTest     --> Loads the complete Spring application context
 
@@ -37,12 +35,28 @@ class BeerControllerTest {
     void getBeerById() throws Exception {
         //Create a test beer, use the beerServiceImpl's listBeers() to grab any beer by index
         Beer testBeer = beerServiceImpl.listBeers().get(0);
-
         //Given any UUID id, and pass it to the getBeerById method, will return the testBeer
-        given(beerService.getBeerById(any(UUID.class))).willReturn(testBeer);
-
-        mockMvc.perform(get("/api/v1/beer/" + UUID.randomUUID())
+        given(beerService.getBeerById(testBeer.getId())).willReturn(testBeer);
+        mockMvc.perform(get("/api/v1/beer/" + testBeer.getId())
                 .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(testBeer.getId().toString())))
+                .andExpect(jsonPath("$.beerName", is(testBeer.getBeerName())));
+    }
+
+    //Create a test to test for the list of beers
+    @Test
+    public void testListBeers() throws Exception {
+        //given a list of beers from beer service will return the same as a beerServiceImpl list of beers
+        given(beerService.listBeers()).willReturn(beerServiceImpl.listBeers());
+        //Use mockMvn to perform a get on the endpoint to list beers. This should accept a MediaType of JSON
+        //and make assertions regarding status code, the media content type, and the size of the list
+        mockMvc.perform(get("/api/v1/beer")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.length()", is(3)));
+
+
     }
 }
