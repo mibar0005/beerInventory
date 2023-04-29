@@ -27,7 +27,8 @@ public class BeerController {
 
 
     //Create a method that returns a list of all beers
-    @RequestMapping(method = RequestMethod.GET)
+//    @RequestMapping(method = RequestMethod.GET)
+    @GetMapping
     public List<Beer> listBeers() {
         return beerService.listBeers();
     }
@@ -36,7 +37,8 @@ public class BeerController {
     //Create a method to get a Beer by Id
     //@PathVariable --> Used to handle template variables in the request URI mapping, and set them as method parameters
     //Need to specify the path variable in curly braces, and inside the @PathVariable annotation
-    @RequestMapping(value = "{beerId}", method = RequestMethod.GET)
+//    @RequestMapping(value = "{beerId}", method = RequestMethod.GET)
+    @GetMapping("{beerId}")
     public Beer getBeerById(@PathVariable("beerId") UUID beerId) {
         log.debug("Get beer by Id - in controller");
         return beerService.getBeerById(beerId);

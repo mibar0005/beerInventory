@@ -1,18 +1,30 @@
 package com.mibar.springrestmvc.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mibar.springrestmvc.model.Beer;
 import com.mibar.springrestmvc.service.BeerService;
 import com.mibar.springrestmvc.service.BeerServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 //@SpringBootTest     --> Loads the complete Spring application context
@@ -29,7 +41,26 @@ class BeerControllerTest {
     @MockBean
     BeerService beerService;
 
-    BeerServiceImpl beerServiceImpl = new BeerServiceImpl();
+    //Object Mapper helps us serialize and deserialize data from JSON. POJOs to JSON and vice versa
+    @Autowired
+    ObjectMapper objectMapper;
+
+    BeerServiceImpl beerServiceImpl;
+
+    //Use Captor's to Id and Beer
+    @Captor
+    ArgumentCaptor<UUID> uuidArgumentCaptor;
+
+    @Captor
+    ArgumentCaptor<Beer> beerArgumentCaptor;
+
+    //Initialize the BeerServiceImpl inside the before each so we have a fresh list after each test
+    @BeforeEach
+    void setUp() {
+        beerServiceImpl = new BeerServiceImpl();
+    }
+
+
 
     @Test
     void getBeerById() throws Exception {
@@ -56,7 +87,86 @@ class BeerControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.length()", is(3)));
+    }
+
+
+    @Test
+    void testCreateNewBeer() throws Exception {
+        //Create a beer Object and store a beer in that object
+        Beer beer = beerServiceImpl.listBeers().get(0);
+        //Set up MockMvc to pass in that beer object as JSON into the controller and allow the controller
+        //to create the action.
+        //Set Id and Version to null for now
+        beer.setVersion(null);
+        beer.setId(null);
+
+        given(beerService.saveNewBeer(any(Beer.class))).willReturn(beerServiceImpl.listBeers().get(1));
+
+        mockMvc.perform(post("/api/v1/beer")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        //place the body of the JSON file here
+                        .content(objectMapper.writeValueAsString(beer)))
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"));
+    }
+
+
+    //We are updating the service
+    //We are going to verify the interaction --> there is not much mocking for this
+    //but we can verify that this was called
+    @Test
+    void testUpdateBeer() throws Exception {
+        //Grab a beer from the beerList and store it in a beer object
+        Beer beer = beerServiceImpl.listBeers().get(0);
+        //We dont have a given(), so we can get straight to the Mocking
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/beer/" + beer.getId())
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(beer)))
+                .andExpect(status().isNoContent());
+
+        //use verify() method to make sure the interaction occurred
+        verify(beerService).updateBeerById(any(UUID.class), any(Beer.class));
+    }
+
+    //Create a test method to delete a beer
+    @Test
+    void testDeleteBeer() throws Exception {
+        //Store a beer into a beer object
+        Beer beer = beerServiceImpl.listBeers().get(0);
+
+        mockMvc.perform(delete("/api/v1/beer/" + beer.getId())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        verify(beerService).deleteById(uuidArgumentCaptor.capture());
+
+        assertThat(beer.getId()).isEqualTo(uuidArgumentCaptor.getValue());
 
 
     }
+
+
+    @Test
+    void testPatchBeer() throws Exception {
+        Beer beer = beerServiceImpl.listBeers().get(0);
+
+        //Create a new beerMap and add a K,V pair
+        Map<String, Object> beerMap = new HashMap<>();
+        beerMap.put("beerName", "New Name");
+
+        mockMvc.perform(patch("/api/v1/beer/" + beer.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(beerMap)))
+                .andExpect(status().isNoContent());
+
+        verify(beerService).patchBeerById(uuidArgumentCaptor.capture(), beerArgumentCaptor.capture());
+
+        assertThat(beer.getId()).isEqualTo(uuidArgumentCaptor.getValue());
+        assertThat(beerMap.get("beerName")).isEqualTo(beerArgumentCaptor.getValue().getBeerName());
+    }
+
+
 }
