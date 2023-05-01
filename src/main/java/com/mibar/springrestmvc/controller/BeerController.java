@@ -41,9 +41,9 @@ public class BeerController {
     @GetMapping("{beerId}")
     public Beer getBeerById(@PathVariable("beerId") UUID beerId) {
         log.debug("Get beer by Id - in controller");
-        return beerService.getBeerById(beerId);
-
+        return beerService.getBeerById(beerId).orElseThrow(NotFoundException::new);
     }
+
 
     //Create a POST method to accept a new beer object
     //This method should return a ResponseEntity and takes in a Beer object
