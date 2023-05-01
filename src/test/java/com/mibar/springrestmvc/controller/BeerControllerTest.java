@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -67,12 +68,24 @@ class BeerControllerTest {
         //Create a test beer, use the beerServiceImpl's listBeers() to grab any beer by index
         Beer testBeer = beerServiceImpl.listBeers().get(0);
         //Given any UUID id, and pass it to the getBeerById method, will return the testBeer
-        given(beerService.getBeerById(testBeer.getId())).willReturn(testBeer);
+        given(beerService.getBeerById(testBeer.getId())).willReturn(Optional.of(testBeer));
         mockMvc.perform(get("/api/v1/beer/" + testBeer.getId())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(testBeer.getId().toString())))
                 .andExpect(jsonPath("$.beerName", is(testBeer.getBeerName())));
+    }
+
+
+    //We are going to throw an Exception using Mockito for when get beer by Id is not found
+    @Test
+    void getBeerByIdNotFound() throws Exception {
+
+        given(beerService.getBeerById(any(UUID.class))).willReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/beer/" + UUID.randomUUID()))
+                .andExpect(status().isNotFound());
+
     }
 
     //Create a test to test for the list of beers
@@ -88,7 +101,6 @@ class BeerControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.length()", is(3)));
     }
-
 
     @Test
     void testCreateNewBeer() throws Exception {
