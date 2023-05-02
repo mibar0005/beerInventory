@@ -10,7 +10,7 @@ import java.util.UUID;
 //model folder --> Where our POJOs will reside
 @Data     // Adds Getter, Setter, RequiredArgsConstructor, ToString, EqualsAndHashCode
 @Builder  // Helpful mechanism for using the Builder pattern without writing boilerplate code
-public class Beer {
+public class BeerDTO {
     private UUID id;
     private Integer version;
     private String beerName;

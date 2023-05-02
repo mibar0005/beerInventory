@@ -1,6 +1,6 @@
 package com.mibar.springrestmvc.controller;
 
-import com.mibar.springrestmvc.model.Beer;
+import com.mibar.springrestmvc.model.BeerDTO;
 import com.mibar.springrestmvc.service.BeerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ public class BeerController {
     //Create a method that returns a list of all beers
 //    @RequestMapping(method = RequestMethod.GET)
     @GetMapping
-    public List<Beer> listBeers() {
+    public List<BeerDTO> listBeers() {
         return beerService.listBeers();
     }
 
@@ -39,7 +39,7 @@ public class BeerController {
     //Need to specify the path variable in curly braces, and inside the @PathVariable annotation
 //    @RequestMapping(value = "{beerId}", method = RequestMethod.GET)
     @GetMapping("{beerId}")
-    public Beer getBeerById(@PathVariable("beerId") UUID beerId) {
+    public BeerDTO getBeerById(@PathVariable("beerId") UUID beerId) {
         log.debug("Get beer by Id - in controller");
         return beerService.getBeerById(beerId).orElseThrow(NotFoundException::new);
     }
@@ -52,9 +52,9 @@ public class BeerController {
     //@RequestBody --> annotation tells a controller that the object returned is automatically serialized into
     // JSON and passed back into the HttpResponse object
     @PostMapping
-    public ResponseEntity handlePost(@RequestBody Beer beer) {
+    public ResponseEntity handlePost(@RequestBody BeerDTO beer) {
         //Call the saveNewBeer method in beerService and pass in the beer object
-        Beer savedBeer = beerService.saveNewBeer(beer);
+        BeerDTO savedBeer = beerService.saveNewBeer(beer);
 
         //Create an HTTP header with the Location and the header value
         HttpHeaders headers = new HttpHeaders();
@@ -67,7 +67,7 @@ public class BeerController {
     //Create a method that updates a resource and returns a Response Entity
     //You will use @PathVariable(to find the beerId) and @RequestBody(to update the Beer Object)
     @PutMapping("{beerId}")
-    public ResponseEntity updateById(@PathVariable("beerId") UUID beerId, @RequestBody Beer beer) {
+    public ResponseEntity updateById(@PathVariable("beerId") UUID beerId, @RequestBody BeerDTO beer) {
 
         //Call the updateBeerById method on beerService
         beerService.updateBeerById(beerId, beer);
@@ -78,7 +78,7 @@ public class BeerController {
 
     //Create a method to PATCH a beer object
     @PatchMapping("{beerId}")
-    public ResponseEntity updateBeerPatchById(@PathVariable("beerId") UUID beerId, @RequestBody Beer beer) {
+    public ResponseEntity updateBeerPatchById(@PathVariable("beerId") UUID beerId, @RequestBody BeerDTO beer) {
 
         beerService.patchBeerById(beerId, beer);
 

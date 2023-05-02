@@ -1,7 +1,7 @@
 package com.mibar.springrestmvc.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mibar.springrestmvc.model.Beer;
+import com.mibar.springrestmvc.model.BeerDTO;
 import com.mibar.springrestmvc.service.BeerService;
 import com.mibar.springrestmvc.service.BeerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +53,7 @@ class BeerControllerTest {
     ArgumentCaptor<UUID> uuidArgumentCaptor;
 
     @Captor
-    ArgumentCaptor<Beer> beerArgumentCaptor;
+    ArgumentCaptor<BeerDTO> beerArgumentCaptor;
 
     //Initialize the BeerServiceImpl inside the before each so we have a fresh list after each test
     @BeforeEach
@@ -66,7 +66,7 @@ class BeerControllerTest {
     @Test
     void getBeerById() throws Exception {
         //Create a test beer, use the beerServiceImpl's listBeers() to grab any beer by index
-        Beer testBeer = beerServiceImpl.listBeers().get(0);
+        BeerDTO testBeer = beerServiceImpl.listBeers().get(0);
         //Given any UUID id, and pass it to the getBeerById method, will return the testBeer
         given(beerService.getBeerById(testBeer.getId())).willReturn(Optional.of(testBeer));
         mockMvc.perform(get("/api/v1/beer/" + testBeer.getId())
@@ -105,14 +105,14 @@ class BeerControllerTest {
     @Test
     void testCreateNewBeer() throws Exception {
         //Create a beer Object and store a beer in that object
-        Beer beer = beerServiceImpl.listBeers().get(0);
+        BeerDTO beer = beerServiceImpl.listBeers().get(0);
         //Set up MockMvc to pass in that beer object as JSON into the controller and allow the controller
         //to create the action.
         //Set Id and Version to null for now
         beer.setVersion(null);
         beer.setId(null);
 
-        given(beerService.saveNewBeer(any(Beer.class))).willReturn(beerServiceImpl.listBeers().get(1));
+        given(beerService.saveNewBeer(any(BeerDTO.class))).willReturn(beerServiceImpl.listBeers().get(1));
 
         mockMvc.perform(post("/api/v1/beer")
                         .accept(MediaType.APPLICATION_JSON)
@@ -130,8 +130,8 @@ class BeerControllerTest {
     @Test
     void testUpdateBeer() throws Exception {
         //Grab a beer from the beerList and store it in a beer object
-        Beer beer = beerServiceImpl.listBeers().get(0);
-        //We dont have a given(), so we can get straight to the Mocking
+        BeerDTO beer = beerServiceImpl.listBeers().get(0);
+        //We don't have a given(), so we can get straight to the Mocking
         mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/beer/" + beer.getId())
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -139,14 +139,14 @@ class BeerControllerTest {
                 .andExpect(status().isNoContent());
 
         //use verify() method to make sure the interaction occurred
-        verify(beerService).updateBeerById(any(UUID.class), any(Beer.class));
+        verify(beerService).updateBeerById(any(UUID.class), any(BeerDTO.class));
     }
 
     //Create a test method to delete a beer
     @Test
     void testDeleteBeer() throws Exception {
         //Store a beer into a beer object
-        Beer beer = beerServiceImpl.listBeers().get(0);
+        BeerDTO beer = beerServiceImpl.listBeers().get(0);
 
         mockMvc.perform(delete("/api/v1/beer/" + beer.getId())
                 .accept(MediaType.APPLICATION_JSON))
@@ -162,7 +162,7 @@ class BeerControllerTest {
 
     @Test
     void testPatchBeer() throws Exception {
-        Beer beer = beerServiceImpl.listBeers().get(0);
+        BeerDTO beer = beerServiceImpl.listBeers().get(0);
 
         //Create a new beerMap and add a K,V pair
         Map<String, Object> beerMap = new HashMap<>();
